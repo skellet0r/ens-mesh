@@ -4,14 +4,17 @@ pragma solidity 0.7.6;
 import {ENS} from "@ensdomains/ens/contracts/ENS.sol";
 
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-contract Node is AccessControl {
+contract Node is AccessControl, ERC721 {
     bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
 
     ENS public immutable ens;
     bytes32 public immutable baseNode;
 
-    constructor(ENS _ens, bytes32 _baseNode) {
+    constructor(ENS _ens, bytes32 _baseNode)
+        ERC721("ENS Mesh Node", "ENS-Mesh-Node")
+    {
         ens = _ens;
         baseNode = _baseNode;
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
