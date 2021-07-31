@@ -5,9 +5,10 @@ import {ENS} from "@ensdomains/ens/contracts/ENS.sol";
 
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ERC721Burnable} from "@openzeppelin/contracts/token/ERC721/ERC721Burnable.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/Initializable.sol";
 
-contract Node is AccessControl, ERC721, Initializable {
+contract Node is AccessControl, ERC721, ERC721Burnable, Initializable {
     bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
 
     ENS public immutable ens;
