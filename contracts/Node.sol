@@ -6,6 +6,8 @@ import {ENS} from "@ensdomains/ens/contracts/ENS.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract Node is AccessControl {
+    bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
+
     ENS public immutable ens;
     bytes32 public immutable baseNode;
 
