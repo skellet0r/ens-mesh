@@ -18,7 +18,7 @@ contract Node is AccessControl, ERC721, Initializable {
         ERC721("ENS Mesh Node", "ENS-Mesh-Node")
     {
         ens = _ens;
-        initialize(_baseNode);
+        this.initialize(_baseNode);
     }
 
     function initialize(bytes32 _baseNode) external initializer {
@@ -38,15 +38,23 @@ contract Node is AccessControl, ERC721, Initializable {
         ens.setTTL(baseNode, _ttl);
     }
 
-    function setSubnodeOwner(bytes32 _label, address _owner)
+    function register(bytes32 _label, address _owner)
         external
         onlyRole(REGISTRAR_ROLE)
     {
-        ens.setSubnodeOwner(baseNode, _label, _owner);
+        _safeMint(_owner, uint256(_label));
     }
 
     modifier onlyRole(bytes32 _role) {
         require(hasRole(_role, _msgSender()));
         _;
+    }
+
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 tokenId
+    ) internal override(ERC721) {
+        ens.setSubnodeOwner(baseNode, bytes32(tokenId), to);
     }
 }
