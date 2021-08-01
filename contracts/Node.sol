@@ -46,6 +46,7 @@ contract Node is AccessControl, ERC721, ERC721Burnable {
         onlyRole(REGISTRAR_ROLE)
     {
         _safeMint(_owner, uint256(_label));
+        ens.setSubnodeOwner(baseNode, _label, _owner);
     }
 
     function reclaim(uint256 _tokenId, address _owner) external {
@@ -64,6 +65,8 @@ contract Node is AccessControl, ERC721, ERC721Burnable {
         uint256 tokenId
     ) internal override(ERC721) {
         super._beforeTokenTransfer(from, to, tokenId);
-        ens.setSubnodeOwner(baseNode, bytes32(tokenId), to);
+        if (to == address(0)) {
+            ens.setSubnodeOwner(baseNode, bytes32(tokenId), to);
+        }
     }
 }
