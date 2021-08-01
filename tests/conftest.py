@@ -1,1 +1,1 @@
-pytest_plugins = ["fixtures.accounts"]
+pytest_plugins = ["fixtures.accounts", "fixtures.deployments"]
