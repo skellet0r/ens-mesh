@@ -3,13 +3,13 @@ import pytest
 
 @pytest.fixture(scope="session")
 def registry(alice, pm):
-    ENSRegistry = pm("@ensdomains/ens@0.6.0").ENSRegistry
+    ENSRegistry = pm("ensdomains/ens@0.6.0").ENSRegistry
     return ENSRegistry.deploy({"from": alice})
 
 
 @pytest.fixture(scope="session")
 def registrar(alice, pm, registry, web3):
-    FIFSRegistrar = pm("@ensdomains/ens@0.6.0").FIFSRegistrar
+    FIFSRegistrar = pm("ensdomains/ens@0.6.0").FIFSRegistrar
     registrar = FIFSRegistrar.deploy(registry, web3.ens.namehash("test"), {"from": alice})
     registry.setSubnodeOwner("0x0", web3.ens.labelhash("test"), registrar, {"from": alice})
     return registrar
