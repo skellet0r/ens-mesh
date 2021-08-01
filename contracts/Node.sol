@@ -61,6 +61,7 @@ contract Node is AccessControl, ERC721, ERC721Burnable, Initializable {
         address to,
         uint256 tokenId
     ) internal override(ERC721) {
+        super._beforeTokenTransfer(from, to, tokenId);
         ens.setSubnodeOwner(baseNode, bytes32(tokenId), to);
     }
 }
