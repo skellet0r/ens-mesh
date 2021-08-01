@@ -6,9 +6,8 @@ import {ENS} from "@ensdomains/ens/contracts/ENS.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC721Burnable} from "@openzeppelin/contracts/token/ERC721/ERC721Burnable.sol";
-import {Initializable} from "@openzeppelin/contracts/proxy/Initializable.sol";
 
-contract Node is AccessControl, ERC721, ERC721Burnable, Initializable {
+contract Node is AccessControl, ERC721, ERC721Burnable {
     bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
 
     ENS public immutable ens;
@@ -19,10 +18,13 @@ contract Node is AccessControl, ERC721, ERC721Burnable, Initializable {
         ERC721("ENS Mesh Node", "ENS-Mesh-Node")
     {
         ens = _ens;
-        this.initialize(_baseNode);
+        baseNode = _baseNode;
+        _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        _setupRole(REGISTRAR_ROLE, _msgSender());
     }
 
-    function initialize(bytes32 _baseNode) external initializer {
+    function initialize(bytes32 _baseNode) external {
+        require(baseNode == bytes32(0));
         baseNode = _baseNode;
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _setupRole(REGISTRAR_ROLE, _msgSender());
