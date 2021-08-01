@@ -14,6 +14,13 @@ contract SubnodeRegistrar is Ownable {
     ENS public immutable ens;
     Node public immutable rootNode;
 
+    event SubnodeCreated(
+        address indexed _parentNode,
+        address indexed _admin,
+        address _subnode,
+        bytes32 indexed _label
+    );
+
     constructor(ENS _ens, Node _rootNode) {
         ens = _ens;
         rootNode = _rootNode;
@@ -24,8 +31,21 @@ contract SubnodeRegistrar is Ownable {
         _;
     }
 
-    function createSubnode(Node _node, bytes32 _label) external {
-        this.createSubnodeWithConfig(_node, _label, address(0), 0);
+    function createSubnode(Node _node, bytes32 _label)
+        external
+        authorized(_node)
+    {
+        Node instance = Node(_createSubnode(_node.baseNode(), _label));
+        _node.register(_label, address(instance));
+        // remove ourself as an admin
+        instance.renounceRole(DEFAULT_ADMIN_ROLE, address(this));
+
+        emit SubnodeCreated(
+            address(_node),
+            _msgSender(),
+            address(instance),
+            _label
+        );
     }
 
     function createSubnodeWithConfig(
@@ -45,6 +65,13 @@ contract SubnodeRegistrar is Ownable {
         }
         // remove ourself as an admin
         instance.renounceRole(DEFAULT_ADMIN_ROLE, address(this));
+
+        emit SubnodeCreated(
+            address(_node),
+            _msgSender(),
+            address(instance),
+            _label
+        );
     }
 
     function _createSubnode(bytes32 _parentNode, bytes32 _label)
