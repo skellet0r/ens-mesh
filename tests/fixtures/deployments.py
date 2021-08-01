@@ -20,3 +20,10 @@ def node(alice, Node, registrar, registry, web3):
     node = Node.deploy(registry, web3.ens.namehash("node.test"), {"from": alice})
     registrar.register(web3.ens.labelhash("node"), node, {"from": alice})
     return node
+
+
+@pytest.fixture(scope="session")
+def subnode_registrar(alice, SubnodeRegistrar, node, registry):
+    subnode_registrar = SubnodeRegistrar.deploy(registry, node, {"from": alice})
+    node.grantRole(node.REGISTRAR_ROLE(), subnode_registrar, {"from": alice})
+    return subnode_registrar
