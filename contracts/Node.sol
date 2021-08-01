@@ -13,6 +13,20 @@ import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Recei
 contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
     using SafeERC20 for IERC20;
 
+    event NewResolver(address _resolver);
+    event NewTTL(uint64 _ttl);
+    event NewRegistration(bytes32 indexed _label, address indexed _owner);
+    event ERC20Withdrawn(
+        address indexed _token,
+        uint256 _amount,
+        address indexed _recipient
+    );
+    event ERC721Withdrawn(
+        address indexed _token,
+        uint256 _tokenId,
+        address indexed _recipient
+    );
+
     address public constant ETH_ADDRESS =
         0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
@@ -44,10 +58,12 @@ contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
         ens.setResolver(baseNode, _resolver);
+        emit NewResolver(_resolver);
     }
 
     function setTTL(uint64 _ttl) external onlyRole(DEFAULT_ADMIN_ROLE) {
         ens.setTTL(baseNode, _ttl);
+        emit NewTTL(_ttl);
     }
 
     function register(bytes32 _label, address _owner)
@@ -56,6 +72,7 @@ contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
     {
         _safeMint(_owner, uint256(_label));
         ens.setSubnodeOwner(baseNode, _label, _owner);
+        emit NewRegistration(_label, _owner);
     }
 
     function reclaim(uint256 _tokenId, address _owner) external {
@@ -93,9 +110,13 @@ contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
         if (address(_token) == ETH_ADDRESS) {
-            _recipient.transfer(address(this).balance);
+            uint256 amount = address(this).balance;
+            _recipient.transfer(amount);
+            emit ERC20Withdrawn(ETH_ADDRESS, amount, _recipient);
         } else {
-            _token.transfer(_recipient, _token.balanceOf(address(this)));
+            uint256 amount = _token.balanceOf(address(this));
+            _token.transfer(_recipient, amount);
+            emit ERC20Withdrawn(address(_token), amount, _recipient);
         }
     }
 
@@ -106,5 +127,6 @@ contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
         bytes memory _data
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _token.safeTransferFrom(address(this), _recipient, _tokenId, _data);
+        emit ERC721Withdrawn(address(_token), _tokenId, _recipient);
     }
 }
