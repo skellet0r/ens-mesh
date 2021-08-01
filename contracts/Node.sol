@@ -6,8 +6,9 @@ import {ENS} from "@ensdomains/ens/contracts/ENS.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC721Burnable} from "@openzeppelin/contracts/token/ERC721/ERC721Burnable.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
-contract Node is AccessControl, ERC721, ERC721Burnable {
+contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
     bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
 
     ENS public immutable ens;
@@ -68,5 +69,14 @@ contract Node is AccessControl, ERC721, ERC721Burnable {
         if (to == address(0)) {
             ens.setSubnodeOwner(baseNode, bytes32(tokenId), to);
         }
+    }
+
+    function onERC721Received(
+        address operator,
+        address from,
+        uint256 tokenId,
+        bytes calldata data
+    ) external override returns (bytes4) {
+        return type(IERC721Receiver).interfaceId;
     }
 }
