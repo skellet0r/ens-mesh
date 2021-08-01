@@ -76,12 +76,14 @@ contract SubnodeRegistrar is Ownable {
 
     function _createSubnode(bytes32 _parentNode, bytes32 _label)
         internal
-        returns (address instance)
+        returns (address payable instance)
     {
         // Calculate the subnode
         bytes32 subnode = keccak256(abi.encodePacked(_parentNode, _label));
         // Create the subnode using the subnode as the salt
-        instance = Clones.cloneDeterministic(address(rootNode), subnode);
+        instance = payable(
+            Clones.cloneDeterministic(address(rootNode), subnode)
+        );
         // initialize the subnode
         Node(instance).initialize(subnode);
         // grant the caller the default admin role
