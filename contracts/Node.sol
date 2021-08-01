@@ -4,11 +4,17 @@ pragma solidity 0.7.6;
 import {ENS} from "@ensdomains/ens/contracts/ENS.sol";
 
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC721Burnable} from "@openzeppelin/contracts/token/ERC721/ERC721Burnable.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
+    using SafeERC20 for IERC20;
+
+    address public constant ETH_ADDRESS =
+        0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
 
     ENS public immutable ens;
@@ -78,5 +84,25 @@ contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
         bytes calldata data
     ) external override returns (bytes4) {
         return type(IERC721Receiver).interfaceId;
+    }
+
+    function withdrawERC20(IERC20 _token, address payable _recipient)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        if (address(_token) == ETH_ADDRESS) {
+            _recipient.send(address(this).balance);
+        } else {
+            _token.transfer(_recipient, _token.balanceOf(address(this)));
+        }
+    }
+
+    function withdrawERC721(
+        ERC721 _token,
+        uint256 _tokenId,
+        address _recipient,
+        bytes memory _data
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _token.safeTransferFrom(address(this), _recipient, _tokenId, _data);
     }
 }
