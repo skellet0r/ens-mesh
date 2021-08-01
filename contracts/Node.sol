@@ -30,6 +30,8 @@ contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
         _setupRole(REGISTRAR_ROLE, _msgSender());
     }
 
+    receive() external payable {}
+
     function initialize(bytes32 _baseNode) external {
         require(baseNode == bytes32(0));
         baseNode = _baseNode;
@@ -91,7 +93,7 @@ contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
         if (address(_token) == ETH_ADDRESS) {
-            _recipient.send(address(this).balance);
+            _recipient.transfer(address(this).balance);
         } else {
             _token.transfer(_recipient, _token.balanceOf(address(this)));
         }
