@@ -46,6 +46,11 @@ contract Node is AccessControl, ERC721, ERC721Burnable, Initializable {
         _safeMint(_owner, uint256(_label));
     }
 
+    function reclaim(uint256 _tokenId, address _owner) external {
+        require(_isApprovedOrOwner(_msgSender(), _tokenId));
+        ens.setSubnodeOwner(baseNode, bytes32(_tokenId), _owner);
+    }
+
     modifier onlyRole(bytes32 _role) {
         require(hasRole(_role, _msgSender()));
         _;
