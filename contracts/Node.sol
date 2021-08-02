@@ -10,6 +10,9 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC721Burnable} from "@openzeppelin/contracts/token/ERC721/ERC721Burnable.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
+/// @title ENS Node
+/// @author Edward Amor
+/// @notice A single node in the ENS Directed Acyclic Graph
 contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
     using SafeERC20 for IERC20;
 
@@ -44,8 +47,15 @@ contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
         _setupRole(REGISTRAR_ROLE, _msgSender());
     }
 
+    /// @dev Enables receiving ETH
     receive() external payable {}
 
+    /**
+     * @notice Initialize the contract.
+     * @dev This should be called in the same transaction as the creation
+     * of the proxy contract.
+     * @param _baseNode The ENS node this contract has ownership of
+     */
     function initialize(bytes32 _baseNode) external {
         require(baseNode == bytes32(0));
         baseNode = _baseNode;
@@ -53,6 +63,10 @@ contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
         _setupRole(REGISTRAR_ROLE, _msgSender());
     }
 
+    /**
+     * @notice Set the resolver for the owned ENS node
+     * @param _resolver The address of a resolver contract
+     */
     function setResolver(address _resolver)
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
@@ -61,11 +75,21 @@ contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
         emit NewResolver(_resolver);
     }
 
+    /**
+     * @notice Set the TTL for the owned ENS node
+     * @param _ttl The TTL (in seconds)
+     */
     function setTTL(uint64 _ttl) external onlyRole(DEFAULT_ADMIN_ROLE) {
         ens.setTTL(baseNode, _ttl);
         emit NewTTL(_ttl);
     }
 
+    /**
+     * @notice Register a subnode
+     * @dev Only callable by an account with the REGISTRAR_ROLE
+     * @param _label The labelhash of the label to register
+     * @param _owner The account to give ownership to
+     */
     function register(bytes32 _label, address _owner)
         external
         onlyRole(REGISTRAR_ROLE)
@@ -75,16 +99,25 @@ contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
         emit NewRegistration(_label, _owner);
     }
 
+    /**
+     * @notice Reclaim ownership of a direct ENS subnode
+     * @dev The caller must be the owner of the token representing
+     * the ENS node, or an operator, or approved.
+     * @param _tokenId The tokenId (uint256(_label)) to reclaim ownership of
+     * @param _owner The account to transfer ownership of the subnode to
+     */
     function reclaim(uint256 _tokenId, address _owner) external {
         require(_isApprovedOrOwner(_msgSender(), _tokenId));
         ens.setSubnodeOwner(baseNode, bytes32(_tokenId), _owner);
     }
 
+    /// @dev Modifier limiting access to functions to users with specific privileges
     modifier onlyRole(bytes32 _role) {
         require(hasRole(_role, _msgSender()));
         _;
     }
 
+    /// @dev On burning a token also revoke ENS subnode ownership
     function _beforeTokenTransfer(
         address from,
         address to,
@@ -96,6 +129,7 @@ contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
         }
     }
 
+    /// @dev Allow the receipt of ERC721 tokens
     function onERC721Received(
         address operator,
         address from,
@@ -105,6 +139,7 @@ contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
         return type(IERC721Receiver).interfaceId;
     }
 
+    /// @dev Allows the admin to withdraw funds sent to this contract
     function withdrawERC20(IERC20 _token, address payable _recipient)
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
@@ -120,6 +155,10 @@ contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
         }
     }
 
+    /// @dev Allows the admin to withdraw ERC721 tokens
+    /// CAUTION: If this is a subnode with tokenized ownership of
+    /// an ENS node, the admin will be able to transfer the token
+    /// representing ownership and, thereby edit subnode ENS records
     function withdrawERC721(
         ERC721 _token,
         uint256 _tokenId,
