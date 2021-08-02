@@ -35,7 +35,7 @@ contract SubnodeRegistrar is Ownable {
         external
         authorized(_node)
     {
-        Node instance = Node(_createSubnode(_node.baseNode(), _label));
+        Node instance = Node(_createSubnodeContract(_node.baseNode(), _label));
         _node.register(_label, address(instance));
         // remove ourself as an admin
         instance.renounceRole(DEFAULT_ADMIN_ROLE, address(this));
@@ -54,7 +54,7 @@ contract SubnodeRegistrar is Ownable {
         address _resolver,
         uint64 _ttl
     ) external authorized(_node) {
-        Node instance = Node(_createSubnode(_node.baseNode(), _label));
+        Node instance = Node(_createSubnodeContract(_node.baseNode(), _label));
         _node.register(_label, address(instance));
 
         if (_resolver != address(0)) {
@@ -74,7 +74,7 @@ contract SubnodeRegistrar is Ownable {
         );
     }
 
-    function _createSubnode(bytes32 _parentNode, bytes32 _label)
+    function _createSubnodeContract(bytes32 _parentNode, bytes32 _label)
         internal
         returns (address payable instance)
     {
