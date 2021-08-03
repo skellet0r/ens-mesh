@@ -2,6 +2,7 @@
 pragma solidity 0.7.6;
 
 import {ENS} from "@ensdomains/ens/contracts/ENS.sol";
+import {ReverseRegistrar} from "@ensdomains/ens/contracts/ReverseRegistrar.sol";
 
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -17,6 +18,7 @@ contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
     using SafeERC20 for IERC20;
 
     event NewResolver(address _resolver);
+    event NewReverseResolver(address _resolver);
     event NewTTL(uint64 _ttl);
     event NewRegistration(bytes32 indexed _label, address indexed _owner);
     event ERC20Withdrawn(
@@ -30,6 +32,10 @@ contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
         address indexed _recipient
     );
 
+    // namehash('addr.reverse')
+    bytes32 public constant ADDR_REVERSE_NODE =
+        0x91d1777781884d03a6757a803996e38de2a42967fb37eeaca72729271025a9e2;
+
     address public constant ETH_ADDRESS =
         0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
@@ -37,12 +43,19 @@ contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
     ENS public immutable ens;
 
     bytes32 public baseNode;
+    bytes32 public reverseNode;
 
     constructor(ENS _ens, bytes32 _baseNode)
         ERC721("ENS Mesh Node", "ENS-Mesh-Node")
     {
         ens = _ens;
         baseNode = _baseNode;
+
+        ReverseRegistrar reverseRegistrar = ReverseRegistrar(
+            _ens.owner(ADDR_REVERSE_NODE)
+        );
+        reverseRegistrar.claim(address(this));
+
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _setupRole(REGISTRAR_ROLE, _msgSender());
     }
@@ -59,6 +72,12 @@ contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
     function initialize(bytes32 _baseNode) external {
         require(baseNode == bytes32(0));
         baseNode = _baseNode;
+
+        ReverseRegistrar reverseRegistrar = ReverseRegistrar(
+            ens.owner(ADDR_REVERSE_NODE)
+        );
+        reverseRegistrar.claim(address(this));
+
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _setupRole(REGISTRAR_ROLE, _msgSender());
     }
@@ -73,6 +92,16 @@ contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
     {
         ens.setResolver(baseNode, _resolver);
         emit NewResolver(_resolver);
+    }
+
+    /**
+     */
+    function setReverseResolver(address _resolver)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        ens.setResolver(reverseNode, _resolver);
+        emit NewReverseResolver(_resolver);
     }
 
     /**
