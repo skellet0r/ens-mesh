@@ -54,7 +54,7 @@ contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
         ReverseRegistrar reverseRegistrar = ReverseRegistrar(
             _ens.owner(ADDR_REVERSE_NODE)
         );
-        reverseRegistrar.claim(address(this));
+        reverseNode = reverseRegistrar.claim(address(this));
 
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _setupRole(REGISTRAR_ROLE, _msgSender());
@@ -76,7 +76,7 @@ contract Node is AccessControl, ERC721, ERC721Burnable, IERC721Receiver {
         ReverseRegistrar reverseRegistrar = ReverseRegistrar(
             ens.owner(ADDR_REVERSE_NODE)
         );
-        reverseRegistrar.claim(address(this));
+        reverseNode = reverseRegistrar.claim(address(this));
 
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _setupRole(REGISTRAR_ROLE, _msgSender());
